@@ -103,13 +103,30 @@ class AjaxSelect2Field extends TextField
             )
         );
 
-        if ($this->Value() && $object = DataObject::get($this->getConfig('classToSearch'))->byID($this->Value())) {
-            $originalSourceFileComments = Config::inst()->get('SSViewer', 'source_file_comments');
-            Config::inst()->update('SSViewer', 'source_file_comments', false);
-            $attributes['data-selectioncontent'] = html_entity_decode(SSViewer::fromString($this->getConfig('selectionFormat'))->process($object));
-            Config::inst()->update('SSViewer', 'source_file_comments', $originalSourceFileComments);
+        $value = $this->Value();
+        if (strpos($value, ",") === false) {
+            if ($this->Value() && $object = DataObject::get($this->getConfig('classToSearch'))->byID($this->Value())) {
+                $originalSourceFileComments = Config::inst()->get('SSViewer', 'source_file_comments');
+                Config::inst()->update('SSViewer', 'source_file_comments', false);
+                $attributes['data-selectioncontent'] = html_entity_decode(SSViewer::fromString($this->getConfig('selectionFormat'))->process($object));
+                Config::inst()->update('SSViewer', 'source_file_comments', $originalSourceFileComments);
+            }
+        } else {
+            $values = explode(",", $this->Value());
+            if ($values) {
+                $selected = [];
+                foreach($values as $value) {
+                    $object = DataObject::get($this->getConfig('classToSearch'))->byID($value);
+                    if ($object) {
+                        $selected[] = html_entity_decode(SSViewer::fromString($this->getConfig('selectionFormat'))->process($object));
+                    }
+                }
+                $originalSourceFileComments = Config::inst()->get('SSViewer', 'source_file_comments');
+                Config::inst()->update('SSViewer', 'source_file_comments', false);
+                $attributes['data-selectioncontent'] = json_encode($selected);
+                Config::inst()->update('SSViewer', 'source_file_comments', $originalSourceFileComments);
+            }
         }
-
         return $attributes;
     }
 }
